@@ -5,13 +5,15 @@ Aditya's HTTP API.
 Run locally:      uvicorn server:app --reload
 Run in Docker:     see Dockerfile
 Deploy anywhere:   Render, Railway, Fly.io, Google Cloud Run, a VPS, etc.
-                   — see README.md for one-click deploy notes.
+                   -- see README.md for one-click deploy notes.
 
 Once deployed, Aditya is reachable from anywhere via:
     POST /chat        {"session_id": "...", "message": "..."}
 """
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from aditya.agent import Aditya
@@ -19,13 +21,11 @@ from aditya.config import settings
 from aditya.memory import clear_history, load_history, save_history
 
 app = FastAPI(
-    title=f"{settings.NAME} Agent API",
-    description="A dynamic, tool-using AI agent — accessible from anywhere.",
+    title=settings.NAME + " Agent API",
+    description="A dynamic, tool-using AI agent -- accessible from anywhere.",
     version="1.0.0",
 )
 
-# Wide-open CORS by default so any frontend can call this API.
-# Tighten `allow_origins` before going to production if you need to.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -34,6 +34,12 @@ app.add_middleware(
 )
 
 agent = Aditya()
+
+
+@app.get("/")
+def root():
+    """Serve the built-in chat webpage at the root URL."""
+    return FileResponse("static/index.html")
 
 
 class ChatRequest(BaseModel):

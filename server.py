@@ -12,7 +12,6 @@ Once deployed, Aditya is reachable from anywhere via:
 """
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -34,12 +33,6 @@ app.add_middleware(
 )
 
 agent = Aditya()
-
-
-@app.get("/")
-def root():
-    """Serve the built-in chat webpage at the root URL."""
-    return FileResponse("static/index.html")
 
 
 class ChatRequest(BaseModel):
@@ -88,3 +81,8 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("server:app", host=settings.HOST, port=settings.PORT, reload=False)
+
+
+# Mounted LAST so it doesn't shadow the API routes above.
+# html=True makes it automatically serve static/index.html at "/".
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
